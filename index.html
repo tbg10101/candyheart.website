@@ -10,34 +10,55 @@
               href="https://fonts.googleapis.com/css?family=Roboto">
         <script>
             function onLoad() {
-                const messages = [
-                    "BE MINE",
-                    "MY LOVE",
-                    "SUPER COOL",
-                    "SNUG AS A BUG",
-                    "DARLING",
-                    "I <3 YOU",
-                    "REAL LOVE",
-                    "LOVE YOU",
-                    "YOU & ME",
-                    "IT'S LOVE"
-                ];
+                const urlParams = new URLSearchParams(window.location.search);
+                let messageListAddress = "";
 
-                const selectedMessageIndex = Math.floor(messages.length * Math.random());
-                console.log("Selected message index: " + selectedMessageIndex);
+                if (urlParams.has("messageListHref")) {
+                    messageListAddress = urlParams.get("messageListHref");
+                }
 
-                const selectedMessage = messages[selectedMessageIndex];
-                console.log("Selected message: " + selectedMessage);
+                if (messageListAddress.length < 8) {
+                    messageListAddress = "default-messages.txt"
+                    console.log("Using the default list of messages: " + messageListAddress);
+                } else {
+                    console.log("Using a custom list of messages: " + messageListAddress);
+                }
 
-                const messageDisplay = document.getElementById("message-display");
-                messageDisplay.textContent = messages[selectedMessageIndex];
+                const messageXhr = new XMLHttpRequest();
+                messageXhr.open("GET", messageListAddress, true);
+                messageXhr.responseType = "text";
 
-                const heartShapeDisplay = document.getElementById("heart-shape-display");
-                const hue = 360 * Math.random()
-                heartShapeDisplay.setAttribute("fill", "hsl(" + hue + ", 100%, 90%)");
-                heartShapeDisplay.setAttribute("stroke", "hsl(" + hue + ", 100%, 30%)");
+                messageXhr.onload = function () {
+                    let selectedMessage
 
-                // TODO colors
+                    if (messageXhr.readyState === messageXhr.DONE && messageXhr.status === 200) {
+                        const rawMessages = messageXhr.responseText.split("\n");
+                        const messages = rawMessages.filter(word => {
+                            const trimmedWord = word.trim();
+                            return trimmedWord.length > 0 && trimmedWord.charAt(0) !== "#";
+                        });
+                        console.log("Available messages: " + messages);
+
+                        const selectedMessageIndex = Math.floor(messages.length * Math.random());
+                        console.log("Selected message index: " + selectedMessageIndex);
+
+                        selectedMessage = messages[selectedMessageIndex];
+                        console.log("Selected message: " + selectedMessage);
+                    } else {
+                        selectedMessage = "ERROR"
+                        console.log("Could not load message list.");
+                    }
+
+                    const messageDisplay = document.getElementById("message-display");
+                    messageDisplay.textContent = selectedMessage;
+
+                    const heartShapeDisplay = document.getElementById("heart-shape-display");
+                    const hue = 360 * Math.random()
+                    heartShapeDisplay.setAttribute("fill", "hsl(" + hue + ", 100%, 90%)");
+                    heartShapeDisplay.setAttribute("stroke", "hsl(" + hue + ", 100%, 30%)");
+                };
+
+                messageXhr.send(null);
             }
         </script>
     </head>
